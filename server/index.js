@@ -302,11 +302,6 @@ async function main() {
 
   app.use('/api', api);
 
-  // SPA fallback
-  app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, '..', 'public', 'index.html'));
-  });
-
   // Find free port
   const portStart = parseInt(process.env.PORT_RANGE_START) || 4242;
   const port = await findFreePort(portStart);
@@ -323,7 +318,12 @@ async function main() {
   alerts.init({ wsManager, twitchApi, db });
   moderation.init({ db, twitchApi, wsManager, alerts, filterRules, filterAi, twitchIrc });
   twitchIrc.init({ moderation, db, wsManager });
-  pluginManager.init({ app, db, twitchIrc, twitchApi, wsManager, moderation });
+  pluginManager.init({ app, api, db, twitchIrc, twitchApi, wsManager, moderation });
+
+  // SPA fallback (MUST BE REGISTERED LAST!)
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, '..', 'public', 'index.html'));
+  });
 
   // Start server
   server.listen(port, () => {

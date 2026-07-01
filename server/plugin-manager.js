@@ -64,7 +64,7 @@ function init(context) {
     res.json({ success: true });
   });
 
-  context.app.use('/api/plugins', router);
+  context.api.use('/plugins', router);
 
   // Scan and load already installed plugins
   loadInstalledPlugins();

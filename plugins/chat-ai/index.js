@@ -215,7 +215,7 @@ Do not include any other text.`;
     }
   });
 
-  context.app.use('/api/plugins/chat-ai', router);
+  context.api.use('/plugins/chat-ai', router);
 
   // Hook into Twitch IRC messages for !chatai
   const handleIrcMessage = async (channel, tags, messageText, self) => {

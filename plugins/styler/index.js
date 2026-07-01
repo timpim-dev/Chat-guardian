@@ -53,7 +53,7 @@ function init(ctx) {
     res.json({ success: true });
   });
 
-  context.app.use('/api/plugins/styler', router);
+  context.api.use('/plugins/styler', router);
 }
 
 function cleanup() {

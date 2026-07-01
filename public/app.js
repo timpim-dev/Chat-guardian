@@ -99,9 +99,10 @@ window.App = {
           });
         }
       }
-      this.updateSidebarNav();
     } catch (e) {
       console.warn('Failed to load plugins:', e);
+    } finally {
+      this.updateSidebarNav();
     }
   },
 
