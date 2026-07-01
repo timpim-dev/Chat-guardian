@@ -1,0 +1,18 @@
+# Chat Guardian — Spam Detection Patterns
+# ───────────────────────────────────────
+# One pattern per line. These are matched against message text.
+# Built-in spam checks (caps, repeats) are hardcoded in filter-rules.js.
+
+# Repeated characters/spam
+(.{1,3})\1{5,}
+
+# Common spam phrases
+follow\s*my\s*(channel|stream|insta|twitter|tiktok)
+check\s*out\s*my\s*(channel|stream|profile)
+come\s*watch\s*me
+free\s*v[\-_]?bucks
+free\s*gift\s*card
+free\s*robux
+claim\s*your\s*free
+congrat[sz]?!?\s*you('ve|\s+have)?\s*been\s*selected
+you('ve|\s+have)?\s*won

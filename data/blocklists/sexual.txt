@@ -1,0 +1,16 @@
+# Chat Guardian — Sexual/Explicit Content Patterns
+# ─────────────────────────────────────────────────
+# One pattern per line. Case-insensitive, word-boundary matched.
+# Regex supported.
+
+# Common explicit terms (basic starter list)
+porn\w*
+hentai
+nsfw
+xxx
+onlyfans
+feetpics?
+nu[d]es?
+send\s*nudes?
+d[i1]ck\s*pic
+boob\w*

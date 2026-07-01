@@ -1,0 +1,25 @@
+# ─── Chat Guardian — systemd user unit ───────────────────────
+# INSTALL:  cp chat-guardian.service ~/.config/systemd/user/
+# EDIT:     Update WorkingDirectory and EnvironmentFile below
+#           to match YOUR installation path.
+# ENABLE:   systemctl --user enable --now chat-guardian.service
+# PERSIST:  loginctl enable-linger $USER
+# ─────────────────────────────────────────────────────────────
+
+[Unit]
+Description=Chat Guardian — Twitch Chat Moderation Service
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=%h/path/to/SecureStream
+ExecStart=/usr/bin/node server/index.js
+Restart=on-failure
+RestartSec=10
+EnvironmentFile=%h/path/to/SecureStream/.env
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=default.target

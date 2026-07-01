@@ -1,0 +1,10 @@
+# Chat Guardian — Hate Speech / Slur Blocklist
+# ─────────────────────────────────────────────
+# Add one pattern per line. Lines starting with # are comments.
+# Patterns are matched case-insensitively as word boundaries.
+# Examples:
+#   badword
+#   b[a@]dw[o0]rd    (regex pattern to catch leetspeak variants)
+#
+# This file is intentionally left for you to populate.
+# The tool ships empty to avoid distributing offensive content.

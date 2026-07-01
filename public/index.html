@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chat Guardian</title>
+  <meta name="description" content="Twitch Chat Moderation Dashboard">
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <div id="app">
+    <nav id="sidebar">
+      <div class="sidebar-header">Chat Guardian</div>
+      <nav>
+        <a class="nav-item" href="#/live" data-page="live">▸ Live Feed</a>
+        <a class="nav-item" href="#/flagged" data-page="flagged">▸ Flagged Log</a>
+        <a class="nav-item" href="#/users" data-page="users">▸ User Strikes</a>
+        <a class="nav-item" href="#/settings" data-page="settings">▸ Settings</a>
+      </nav>
+      <div class="sidebar-footer">
+        <div id="status-irc"><span class="status-dot disconnected"></span>IRC: offline</div>
+        <div id="status-ai" style="margin-top:4px"><span class="status-dot disconnected"></span>AI: off</div>
+        <div id="status-ws" style="margin-top:4px"><span class="status-dot disconnected"></span>WS: disconnected</div>
+      </div>
+    </nav>
+    <main id="content"></main>
+  </div>
+  <div id="toast-container"></div>
+  <div id="modal-overlay" class="hidden"></div>
+
+  <script src="/components/toast.js"></script>
+  <script src="/components/modal.js"></script>
+  <script src="/components/table.js"></script>
+  <script src="/pages/login.js"></script>
+  <script src="/pages/live-feed.js"></script>
+  <script src="/pages/flagged-log.js"></script>
+  <script src="/pages/user-strikes.js"></script>
+  <script src="/pages/settings.js"></script>
+  <script src="/app.js"></script>
+</body>
+</html>

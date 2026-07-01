@@ -1,0 +1,28 @@
+# Chat Guardian — Scam/Phishing Link Patterns
+# ────────────────────────────────────────────
+# Domain patterns (regex) matched against URLs in messages.
+# One pattern per line.
+
+# Common phishing patterns
+steam(community|powered)?[\-_.]?c[o0]mmun[i1]ty
+discord[\-_.]?g[i1]ft
+free[\-_.]?n[i1]tro
+bit\.ly/\S+
+tinyurl\.com/\S+
+
+# Fake Twitch links
+tw[i1]tch[\-_.]?tv[\-_.]\S+
+twltch
+t\.witch\.tv
+
+# Common scam domains
+streamelements?\.?gift
+viewers?bot
+follower[sz]?free
+buyviewer
+cheapviewer
+cheapfollower
+
+# Generic suspicious patterns
+(free|cheap|buy)[\-_.]?(viewers?|followers?|subs?|bits?)
+(earn|get|win)[\-_.]?(money|cash|crypto|bitcoin)

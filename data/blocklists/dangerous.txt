@@ -1,0 +1,14 @@
+# Chat Guardian — Dangerous Content Blocklist
+# ──────────────────────────────────────────
+# Messages matching these patterns will be tagged as dangerous
+# and immediately trigger a 5-minute timeout.
+# One pattern per line. Regex supported.
+
+# Severe threats / self-harm / violence phrases
+kill\s+yourself
+commit\s+suicide
+die\s+in\s+a\s+fire
+i\s+will\s+kill\s+you
+bomb\s+your\s+house
+dox\s+you
+shoot\s+up
