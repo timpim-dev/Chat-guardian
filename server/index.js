@@ -16,6 +16,7 @@ const filterRules = require('./filter-rules');
 const filterAi = require('./filter-ai');
 const moderation = require('./moderation');
 const alerts = require('./alerts');
+const pluginManager = require('./plugin-manager');
 
 const startTime = Date.now();
 
@@ -280,6 +281,7 @@ async function main() {
   alerts.init({ wsManager, twitchApi, db });
   moderation.init({ db, twitchApi, wsManager, alerts, filterRules, filterAi, twitchIrc });
   twitchIrc.init({ moderation, db, wsManager });
+  pluginManager.init({ app, db, twitchIrc, twitchApi, wsManager, moderation });
 
   // Start server
   server.listen(port, () => {

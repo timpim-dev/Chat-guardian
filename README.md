@@ -109,3 +109,42 @@ Custom filters are loaded dynamically from the `data/blocklists/` directory:
 - `spam-patterns.txt`: Regexes matching spam/repeated characters.
 - `scam-links.txt`: Phishing/scam domain matching.
 - `ad-bots.json`: Structured list of ad bot templates matching usernames or patterns.
+
+---
+
+## Add-on / Plugin System
+
+Chat Guardian features an integrated server/client plugin architecture. 
+
+### Method A — Via the Dashboard Plugin Manager (Recommended)
+1. Open the dashboard and navigate to the **Plugins** tab.
+2. Find **Chat AI** in the list and click **Install**.
+3. Toggle the **Enabled** switch to turn the add-on on or off. The dashboard sidebar navigation will automatically update.
+
+### Method B — Manual Git Installation
+If you want to manually manage add-ons:
+1. Create a `plugins` directory in the root of your Chat Guardian folder if it does not exist:
+   ```bash
+   mkdir -p plugins
+   ```
+2. Clone the add-on repository into the `plugins/chat-ai` subdirectory:
+   ```bash
+   git clone https://github.com/timpim-dev/Chat-AI---A-chat-guardian-add-on plugins/chat-ai
+   ```
+3. Restart Chat Guardian. The addon will automatically load.
+
+---
+
+## Chat AI Add-on
+
+The **Chat AI** plugin extends Chat Guardian with real-time assistant features:
+
+1. **Chat AI Assistant Tab**:
+   - Send questions directly to the AI from the dashboard.
+   - **Audio Mode**: Uses the browser Web Speech API to listen for a configurable wake word (e.g. "alexa" or "guardian"). When heard, the subsequent spoken phrase is parsed for action triggers.
+
+2. **Thought Logs & Commands Tab**:
+   - **Thought Logs**: Real-time terminal output displaying user queries, AI analysis steps, and command triggers.
+   - **Voice/Text Triggers**: Define custom regex actions (e.g., `ban (\w+)` or `shoutout (\w+)`) that will fire commands. If a command is triggered, a confirmation modal will display to verify the action.
+   - **!chatai Viewer Command**: Viewers in your Twitch chat can type `!chatai [message]` to get responses in chat (subject to a configurable cooldown, defaults to 500 seconds).
+

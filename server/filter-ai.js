@@ -10,7 +10,15 @@ async function checkMessageAI(messageText, context, settings) {
   }
 
   const model = settings.ai_model || 'meta-llama/llama-3.1-8b-instruct:free';
-  const messages = [{ role: 'system', content: SYSTEM_PROMPT }];
+  let systemPrompt = SYSTEM_PROMPT;
+  if (global.aiSystemPromptModifier) {
+    try {
+      systemPrompt = global.aiSystemPromptModifier(systemPrompt, settings);
+    } catch (e) {
+      console.warn('[AI] Prompt modifier error:', e.message);
+    }
+  }
+  const messages = [{ role: 'system', content: systemPrompt }];
   if (context && context.length > 0) {
     messages.push({ role: 'user', content: `Recent chat context:\n${context.join('\n')}\n\nNow analyze this message:` });
   }

@@ -1,0 +1,14 @@
+[
+  {
+    "id": "chat-ai",
+    "name": "Chat AI",
+    "description": "Adds an interactive AI chat window, audio voice mode (wake-word activated), voice/text custom commands (e.g. ban, shoutout), and detailed AI thought logs.",
+    "github": "https://github.com/timpim-dev/Chat-AI---A-chat-guardian-add-on"
+  },
+  {
+    "id": "styler",
+    "name": "Styler",
+    "description": "Allows customization of the Chat Guardian styles in every sense: AI behavior, mood, and web UI styles with presets.",
+    "github": "https://github.com/timpim-dev/Styler_for_chatGuardian"
+  }
+]

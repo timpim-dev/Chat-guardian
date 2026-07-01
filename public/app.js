@@ -12,6 +12,7 @@ window.App = {
       if (status.authenticated) {
         this.state.authenticated = true;
         this.showApp();
+        await this.loadPlugins();
         this.connectWebSocket();
         const hash = window.location.hash || '#/live';
         this.navigate(hash);
@@ -35,13 +36,73 @@ window.App = {
     document.getElementById('sidebar').style.display = 'flex';
   },
 
-  onAuthenticated() {
+  async onAuthenticated() {
     this.state.authenticated = true;
     this.showApp();
+    await this.loadPlugins();
     this.connectWebSocket();
     window.location.hash = '#/live';
     this.navigate('#/live');
     this.updateStatusIndicators();
+  },
+
+  registerPlugin(config) {
+    this.state.registeredPlugins = this.state.registeredPlugins || [];
+    if (!this.state.registeredPlugins.find(p => p.id === config.id)) {
+      this.state.registeredPlugins.push(config);
+    }
+    this.updateSidebarNav();
+  },
+
+  updateSidebarNav() {
+    const navContainer = document.querySelector('#sidebar nav');
+    if (navContainer) {
+      navContainer.querySelectorAll('.plugin-nav-item').forEach(el => el.remove());
+
+      const pluginsEl = document.createElement('a');
+      pluginsEl.className = 'nav-item plugin-nav-item';
+      pluginsEl.href = '#/plugins';
+      pluginsEl.dataset.page = 'plugins';
+      pluginsEl.textContent = '▸ Plugins';
+      navContainer.appendChild(pluginsEl);
+
+      const registered = this.state.registeredPlugins || [];
+      for (const plugin of registered) {
+        if (plugin.pages) {
+          for (const page of plugin.pages) {
+            const el = document.createElement('a');
+            el.className = 'nav-item plugin-nav-item';
+            el.href = `#/${page.id}`;
+            el.dataset.page = page.id;
+            el.textContent = `▸ ${page.title}`;
+            navContainer.appendChild(el);
+          }
+        }
+      }
+    }
+  },
+
+  async loadPlugins() {
+    try {
+      const plugins = await this.api('GET', '/api/plugins');
+      this.state.plugins = plugins;
+      this.state.registeredPlugins = [];
+
+      for (const p of plugins) {
+        if (p.installed && p.enabled) {
+          await new Promise((resolve) => {
+            const script = document.createElement('script');
+            script.src = `/plugins/${p.id}/public/page.js`;
+            script.onload = resolve;
+            script.onerror = resolve;
+            document.body.appendChild(script);
+          });
+        }
+      }
+      this.updateSidebarNav();
+    } catch (e) {
+      console.warn('Failed to load plugins:', e);
+    }
   },
 
   navigate(hash) {
@@ -51,11 +112,22 @@ window.App = {
     document.querySelectorAll('.nav-item').forEach(item => {
       item.classList.toggle('active', item.dataset.page === page);
     });
+
+    const matchedPluginPage = (this.state.registeredPlugins || [])
+      .flatMap(p => p.pages || [])
+      .find(p => p.id === page);
+
+    if (matchedPluginPage) {
+      matchedPluginPage.render(content);
+      return;
+    }
+
     switch (page) {
       case 'live': LiveFeedPage.render(content); break;
       case 'flagged': FlaggedLogPage.render(content); break;
       case 'users': UserStrikesPage.render(content); break;
       case 'settings': SettingsPage.render(content); break;
+      case 'plugins': PluginsPage.render(content); break;
       default: LiveFeedPage.render(content);
     }
   },
