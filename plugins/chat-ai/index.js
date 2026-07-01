@@ -17,39 +17,57 @@ function addThoughtLog(text) {
 async function callOpenRouter(prompt, systemPrompt) {
   const settings = context.db.getAllSettings();
   const apiKey = settings.ai_api_key;
-  let model = settings.ai_model || 'google/gemma-2-9b-it:free';
-  if (model.includes('gemma-4')) {
-    model = 'google/gemma-2-9b-it:free';
-  }
+  let model = settings.ai_model || 'google/gemma-4-31b-it:free';
   if (!apiKey) {
     throw new Error('OpenRouter API Key not configured in Chat Guardian settings.');
   }
 
-  const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${apiKey}`
-    },
-    body: JSON.stringify({
-      model,
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: prompt }
-      ]
-    })
-  });
+  const makeRequest = async (selectedModel) => {
+    const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`
+      },
+      body: JSON.stringify({
+        model: selectedModel,
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: prompt }
+        ]
+      })
+    });
 
-  if (!res.ok) {
-    const errText = await res.text();
-    throw new Error(`OpenRouter API error (${res.status}): ${errText}`);
-  }
+    if (!res.ok) {
+      const errText = await res.text();
+      let parsed = {};
+      try { parsed = JSON.parse(errText); } catch (e) {}
+      const errMsg = parsed.error ? parsed.error.message : errText;
+      if (res.status === 429 || errMsg.includes('rate-limit') || errMsg.includes('limit') || errMsg.includes('unavailable')) {
+        throw { isRateLimit: true, message: errMsg };
+      }
+      throw new Error(`OpenRouter API error (${res.status}): ${errMsg}`);
+    }
 
-  const data = await res.json();
-  if (data.error) {
-    throw new Error(data.error.message);
+    const data = await res.json();
+    if (data.error) {
+      if (data.error.code === 429 || data.error.message.includes('rate-limit') || data.error.message.includes('limit') || data.error.message.includes('unavailable')) {
+        throw { isRateLimit: true, message: data.error.message };
+      }
+      throw new Error(data.error.message);
+    }
+    return data.choices[0].message.content.trim();
+  };
+
+  try {
+    return await makeRequest(model);
+  } catch (e) {
+    if (e.isRateLimit && model !== 'liquid/lfm-2.5-1.2b-instruct:free') {
+      addThoughtLog(`[Chat AI] Model "${model}" rate-limited or unavailable. Retrying with fallback model (liquid/lfm-2.5-1.2b-instruct:free)...`);
+      return await makeRequest('liquid/lfm-2.5-1.2b-instruct:free');
+    }
+    throw new Error(e.message || e);
   }
-  return data.choices[0].message.content.trim();
 }
 
 function init(ctx) {

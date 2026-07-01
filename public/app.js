@@ -210,6 +210,10 @@ window.App = {
     if (body && method !== 'GET') opts.body = JSON.stringify(body);
     const res = await fetch(path, opts);
     if (res.status === 401) { this.state.authenticated = false; this.showLogin(); throw new Error('Unauthorized'); }
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      throw new Error(data.error || `HTTP error ${res.status}`);
+    }
     return res.json();
   },
 
