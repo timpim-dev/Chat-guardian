@@ -258,6 +258,48 @@ async function main() {
     }
   });
 
+  api.get('/update-status', async (req, res) => {
+    const { exec } = require('child_process');
+    const getLocalCommit = () => new Promise(resolve => {
+      exec('git rev-parse HEAD', (err, stdout) => {
+        resolve(err ? '' : stdout.trim());
+      });
+    });
+
+    const getRemoteCommit = () => new Promise(resolve => {
+      exec('git ls-remote https://github.com/timpim-dev/Chat-guardian refs/heads/main', (err, stdout) => {
+        if (err || !stdout) return resolve('');
+        const parts = stdout.trim().split(/\s+/);
+        resolve(parts[0] || '');
+      });
+    });
+
+    try {
+      const [localHash, remoteHash] = await Promise.all([
+        getLocalCommit(),
+        getRemoteCommit()
+      ]);
+
+      if (!localHash || !remoteHash) {
+        return res.json({
+          update_available: false,
+          current_commit: localHash || 'unknown',
+          latest_commit: remoteHash || 'unknown',
+          error: 'Could not fetch repository information.'
+        });
+      }
+
+      res.json({
+        update_available: localHash !== remoteHash,
+        current_commit: localHash,
+        latest_commit: remoteHash,
+        commands: 'git pull && npm install && systemctl --user restart chat-guardian'
+      });
+    } catch (e) {
+      res.status(500).json({ error: e.message });
+    }
+  });
+
   app.use('/api', api);
 
   // SPA fallback

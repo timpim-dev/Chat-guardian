@@ -10,8 +10,40 @@ window.SettingsPage = {
     const authStatus = await App.api('GET', '/auth/status').catch(() => ({}));
     const activePlan = this.plans.find(p => p.is_active);
 
+    let updateHtml = '';
+    try {
+      const updateStatus = await App.api('GET', '/api/update-status');
+      if (updateStatus.update_available) {
+        updateHtml = `
+          <div class="card" style="border: 1px solid var(--accent-warn-text); background: rgba(255, 193, 7, 0.05); margin-bottom: 20px; padding: 15px;">
+            <div style="font-weight: bold; color: var(--accent-warn-text); font-size: 14px; margin-bottom: 8px;">System Update Available!</div>
+            <p style="margin-bottom: 10px; font-size:12px;">A new commit is available on the remote main branch.</p>
+            <div style="font-size: 11px; margin-bottom: 10px; font-family: monospace;">
+              <div>Current Commit: ${updateStatus.current_commit.substring(0, 7)}</div>
+              <div>Latest Commit: ${updateStatus.latest_commit.substring(0, 7)}</div>
+            </div>
+            <p style="margin-bottom: 5px; font-weight: bold; font-size:12px;">Run these commands on your host server to update:</p>
+            <pre style="background: rgba(0,0,0,0.4); padding: 8px; border-radius: 4px; font-family: monospace; font-size: 11px; overflow-x: auto; color: #fff;">${updateStatus.commands}</pre>
+          </div>
+        `;
+      } else {
+        updateHtml = `
+          <div class="card" style="border: 1px solid var(--border); background: rgba(255, 255, 255, 0.02); margin-bottom: 20px; padding: 15px; font-size: 12px; display: flex; align-items: center; justify-content: space-between;">
+            <div>
+              <span style="color: var(--accent-safe-text); font-weight: bold;">✔ System is up to date</span>
+              <span style="color: var(--text-muted); font-size: 11px; margin-left: 10px;">(Commit: ${updateStatus.current_commit.substring(0, 7)})</span>
+            </div>
+          </div>
+        `;
+      }
+    } catch (e) {
+      console.warn('Failed to fetch update status:', e);
+    }
+
     container.innerHTML = `
       <div class="page-header"><span class="page-title">Settings</span></div>
+
+      ${updateHtml}
 
       <!-- Twitch Connections -->
       <div class="settings-section">
