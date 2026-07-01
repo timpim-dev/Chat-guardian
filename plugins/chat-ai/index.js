@@ -17,7 +17,10 @@ function addThoughtLog(text) {
 async function callOpenRouter(prompt, systemPrompt) {
   const settings = context.db.getAllSettings();
   const apiKey = settings.ai_api_key;
-  const model = settings.ai_model || 'google/gemma-4-31b-it:free';
+  let model = settings.ai_model || 'google/gemma-2-9b-it:free';
+  if (model.includes('gemma-4')) {
+    model = 'google/gemma-2-9b-it:free';
+  }
   if (!apiKey) {
     throw new Error('OpenRouter API Key not configured in Chat Guardian settings.');
   }
@@ -139,9 +142,10 @@ function init(ctx) {
 Available actions:
 - "ban": Ban a user
 - "shoutout": Give a shoutout to a user
+- "say": Say a message in chat
 
 Reply ONLY with a JSON object in this format:
-{"action": "ban" or "shoutout" or "none", "target": "username" or ""}
+{"action": "ban" or "shoutout" or "say" or "none", "target": "username" or "message text" or ""}
 Do not include any other text.`;
 
         const aiResponse = await callOpenRouter(text, systemPrompt);
@@ -206,6 +210,13 @@ Do not include any other text.`;
           addThoughtLog(`Sent shoutout command for ${target} to chat`);
         }
         res.json({ success: true, message: `Shoutout sent for @${target}.` });
+      } else if (action === 'say') {
+        const client = context.twitchIrc.getClient();
+        if (client) {
+          client.say(channel, target).catch(() => {});
+          addThoughtLog(`Sent message to chat: "${target}"`);
+        }
+        res.json({ success: true, message: `Sent message: "${target}" to chat.` });
       } else {
         res.status(400).json({ error: 'Unsupported action.' });
       }

@@ -13,6 +13,9 @@ function init(ctx) {
   if (!context.db.getSetting('styler_ui_theme')) {
     context.db.setSetting('styler_ui_theme', 'dark');
   }
+  if (!context.db.getSetting('styler_custom_css')) {
+    context.db.setSetting('styler_custom_css', '');
+  }
 
   // Register AI system prompt modifier
   global.aiSystemPromptModifier = (prompt, settings) => {
@@ -42,14 +45,16 @@ function init(ctx) {
   router.get('/settings', (req, res) => {
     res.json({
       ai_mood: context.db.getSetting('styler_ai_mood') || 'Strict',
-      ui_theme: context.db.getSetting('styler_ui_theme') || 'dark'
+      ui_theme: context.db.getSetting('styler_ui_theme') || 'dark',
+      custom_css: context.db.getSetting('styler_custom_css') || ''
     });
   });
 
   router.put('/settings', (req, res) => {
-    const { ai_mood, ui_theme } = req.body;
-    context.db.setSetting('styler_ai_mood', ai_mood);
-    context.db.setSetting('styler_ui_theme', ui_theme);
+    const { ai_mood, ui_theme, custom_css } = req.body;
+    if (ai_mood !== undefined) context.db.setSetting('styler_ai_mood', ai_mood);
+    if (ui_theme !== undefined) context.db.setSetting('styler_ui_theme', ui_theme);
+    if (custom_css !== undefined) context.db.setSetting('styler_custom_css', custom_css);
     res.json({ success: true });
   });
 

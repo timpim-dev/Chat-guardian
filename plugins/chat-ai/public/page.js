@@ -103,7 +103,10 @@ window.ChatAiPage = {
       const trigger = row.querySelector('.cmd-trigger').value.trim();
       const action = row.querySelector('.cmd-action').value;
       if (trigger) {
-        commands.push({ trigger, action, label: action === 'ban' ? 'Ban [user]' : 'Shoutout [user]' });
+        let label = 'Say in Chat';
+        if (action === 'ban') label = 'Ban [user]';
+        else if (action === 'shoutout') label = 'Shoutout [user]';
+        commands.push({ trigger, action, label });
       }
     });
 
@@ -135,6 +138,7 @@ window.ChatAiPage = {
       <select class="cmd-action" style="flex:1">
         <option value="shoutout" ${cmd.action === 'shoutout' ? 'selected' : ''}>Shoutout</option>
         <option value="ban" ${cmd.action === 'ban' ? 'selected' : ''}>Ban</option>
+        <option value="say" ${cmd.action === 'say' ? 'selected' : ''}>Say in Chat</option>
       </select>
       <button onclick="this.parentElement.remove()" class="btn-secondary" style="padding:4px 8px;background:var(--accent-error-text);color:#fff">Delete</button>
     `;
@@ -222,6 +226,12 @@ window.ChatAiPage = {
       document.getElementById('audio-status-box').innerHTML = `Listening for wake word: <strong>"${this.settings.wake_word}"</strong>...`;
     };
 
+    rec.onerror = (e) => {
+      console.error('Speech recognition error:', e.error);
+      Toast.show('Speech recognition error: ' + e.error + '. Please check microphone settings.', 'error');
+      this.stopSpeechRecognition();
+    };
+
     rec.onresult = async (event) => {
       const result = event.results[event.results.length - 1][0].transcript.trim().toLowerCase();
       console.log('Heard speech:', result);
@@ -295,6 +305,11 @@ App.state.ws?.addEventListener('message', (event) => {
     }
   } catch(e) {}
 });
+
+// Autoload Chat AI settings when script loads
+(async () => {
+  await ChatAiPage.loadSettings();
+})();
 
 App.registerPlugin({
   id: 'chat-ai',

@@ -67,18 +67,29 @@ window.StylerPage = {
     let styleTag = document.getElementById('styler-theme-overrides');
     if (styleTag) styleTag.remove();
 
-    if (!theme || Object.keys(theme).length === 0) return; // default css
+    if (theme && Object.keys(theme).length > 0) {
+      styleTag = document.createElement('style');
+      styleTag.id = 'styler-theme-overrides';
 
-    styleTag = document.createElement('style');
-    styleTag.id = 'styler-theme-overrides';
-
-    let css = ':root {\n';
-    for (const [key, val] of Object.entries(theme)) {
-      css += `  ${key}: ${val} !important;\n`;
+      let css = ':root {\n';
+      for (const [key, val] of Object.entries(theme)) {
+        css += `  ${key}: ${val} !important;\n`;
+      }
+      css += '}';
+      styleTag.innerHTML = css;
+      document.head.appendChild(styleTag);
     }
-    css += '}';
-    styleTag.innerHTML = css;
-    document.head.appendChild(styleTag);
+
+    // Handle Custom CSS injection
+    let customStyleTag = document.getElementById('styler-custom-css-block');
+    if (customStyleTag) customStyleTag.remove();
+
+    if (this.settings.custom_css) {
+      customStyleTag = document.createElement('style');
+      customStyleTag.id = 'styler-custom-css-block';
+      customStyleTag.innerHTML = this.settings.custom_css;
+      document.head.appendChild(customStyleTag);
+    }
   },
 
   render(container) {
@@ -87,38 +98,49 @@ window.StylerPage = {
         <h1 class="page-title">Styler Customization</h1>
       </div>
 
-      <div class="card" style="max-width: 600px; display:flex; flex-direction:column; gap:20px">
-        <h2>Appearance & AI Settings</h2>
-        
-        <div class="setting-row">
-          <span class="setting-label">AI Mood / Persona</span>
-          <span class="setting-value">
-            <select id="styler-mood-select">
-              <option value="Strict" ${this.settings.ai_mood === 'Strict' ? 'selected' : ''}>Strict (Default)</option>
-              <option value="Friendly" ${this.settings.ai_mood === 'Friendly' ? 'selected' : ''}>Friendly</option>
-              <option value="Sarcastic" ${this.settings.ai_mood === 'Sarcastic' ? 'selected' : ''}>Sarcastic</option>
-              <option value="Passive-Aggressive" ${this.settings.ai_mood === 'Passive-Aggressive' ? 'selected' : ''}>Passive-Aggressive</option>
-              <option value="Pirate" ${this.settings.ai_mood === 'Pirate' ? 'selected' : ''}>Pirate</option>
-              <option value="Moodswings" ${this.settings.ai_mood === 'Moodswings' ? 'selected' : ''}>Moodswings (Randomize)</option>
-            </select>
-          </span>
+      <div style="display:flex;gap:20px;height:calc(100vh - 180px)">
+        <!-- Settings Form -->
+        <div class="card" style="flex:1;display:flex;flex-direction:column;gap:20px;overflow-y:auto">
+          <h2>Appearance & AI Settings</h2>
+          
+          <div class="setting-row">
+            <span class="setting-label">AI Mood / Persona</span>
+            <span class="setting-value">
+              <select id="styler-mood-select">
+                <option value="Strict" ${this.settings.ai_mood === 'Strict' ? 'selected' : ''}>Strict (Default)</option>
+                <option value="Friendly" ${this.settings.ai_mood === 'Friendly' ? 'selected' : ''}>Friendly</option>
+                <option value="Sarcastic" ${this.settings.ai_mood === 'Sarcastic' ? 'selected' : ''}>Sarcastic</option>
+                <option value="Passive-Aggressive" ${this.settings.ai_mood === 'Passive-Aggressive' ? 'selected' : ''}>Passive-Aggressive</option>
+                <option value="Pirate" ${this.settings.ai_mood === 'Pirate' ? 'selected' : ''}>Pirate</option>
+                <option value="Moodswings" ${this.settings.ai_mood === 'Moodswings' ? 'selected' : ''}>Moodswings (Randomize)</option>
+              </select>
+            </span>
+          </div>
+
+          <div class="setting-row">
+            <span class="setting-label">Web UI Theme Preset</span>
+            <span class="setting-value">
+              <select id="styler-theme-select" onchange="StylerPage.previewTheme(this.value)">
+                <option value="dark" ${this.settings.ui_theme === 'dark' ? 'selected' : ''}>Classic Dark</option>
+                <option value="matrix" ${this.settings.ui_theme === 'matrix' ? 'selected' : ''}>Matrix Neon</option>
+                <option value="vampire" ${this.settings.ui_theme === 'vampire' ? 'selected' : ''}>Crimson Vampire</option>
+                <option value="purple" ${this.settings.ui_theme === 'purple' ? 'selected' : ''}>Neon Purple</option>
+                <option value="monochrome" ${this.settings.ui_theme === 'monochrome' ? 'selected' : ''}>Monochrome Light</option>
+              </select>
+            </span>
+          </div>
+
+          <div style="margin-top:10px">
+            <button onclick="StylerPage.saveSettings()" class="btn-primary" style="width:100%">Apply Settings</button>
+          </div>
         </div>
 
-        <div class="setting-row">
-          <span class="setting-label">Web UI Theme Preset</span>
-          <span class="setting-value">
-            <select id="styler-theme-select" onchange="StylerPage.previewTheme(this.value)">
-              <option value="dark" ${this.settings.ui_theme === 'dark' ? 'selected' : ''}>Classic Dark</option>
-              <option value="matrix" ${this.settings.ui_theme === 'matrix' ? 'selected' : ''}>Matrix Neon</option>
-              <option value="vampire" ${this.settings.ui_theme === 'vampire' ? 'selected' : ''}>Crimson Vampire</option>
-              <option value="purple" ${this.settings.ui_theme === 'purple' ? 'selected' : ''}>Neon Purple</option>
-              <option value="monochrome" ${this.settings.ui_theme === 'monochrome' ? 'selected' : ''}>Monochrome Light</option>
-            </select>
-          </span>
-        </div>
-
-        <div style="margin-top:10px">
-          <button onclick="StylerPage.saveSettings()" class="btn-primary">Apply Styles</button>
+        <!-- Custom CSS Editor -->
+        <div class="card" style="flex:1.2;display:flex;flex-direction:column;gap:10px">
+          <h2>Custom CSS Editor</h2>
+          <p class="text-muted" style="font-size:11px">Write custom CSS rules to override any dashboard styles. Rules are applied globally.</p>
+          <textarea id="styler-custom-css-editor" style="flex:1;font-family:monospace;background:#000;color:#fff;border:1px solid var(--border);padding:10px;resize:none" placeholder="/* Example: \nbody { \n  font-family: sans-serif; \n} */">${this.settings.custom_css || ''}</textarea>
+          <button onclick="StylerPage.saveCustomCss()" class="btn-primary">Save Custom CSS</button>
         </div>
       </div>
     `;
@@ -144,11 +166,24 @@ window.StylerPage = {
 
     try {
       await App.api('PUT', '/api/plugins/styler/settings', { ai_mood, ui_theme });
-      this.settings = { ai_mood, ui_theme };
+      this.settings.ai_mood = ai_mood;
+      this.settings.ui_theme = ui_theme;
       this.injectTheme(ui_theme);
       Toast.show('Appearance settings successfully applied', 'success');
     } catch (e) {
       Toast.show('Failed to save styles: ' + e.message, 'error');
+    }
+  },
+
+  async saveCustomCss() {
+    const custom_css = document.getElementById('styler-custom-css-editor').value;
+    try {
+      await App.api('PUT', '/api/plugins/styler/settings', { custom_css });
+      this.settings.custom_css = custom_css;
+      this.injectTheme(this.settings.ui_theme);
+      Toast.show('Custom CSS successfully saved and applied', 'success');
+    } catch (e) {
+      Toast.show('Failed to save custom CSS: ' + e.message, 'error');
     }
   }
 };
