@@ -192,6 +192,19 @@ window.ChatAiPage = {
     this.addLocalMessage('You', msg);
 
     try {
+      // First, check if the text matches a command trigger (regex or AI command)
+      const cmdRes = await App.api('POST', '/api/plugins/chat-ai/command', { text: msg });
+      if (cmdRes.matched) {
+        this.pendingCommand = { action: cmdRes.action, target: cmdRes.target };
+        const confirmBox = document.getElementById('voice-confirmation-box');
+        if (confirmBox) {
+          document.getElementById('voice-confirmation-msg').textContent = cmdRes.message;
+          confirmBox.style.display = 'block';
+        }
+        return;
+      }
+
+      // If no command matched, fall back to normal AI conversation
       const res = await App.api('POST', '/api/plugins/chat-ai/chat', { message: msg });
       this.addLocalMessage('Chat AI', res.reply);
     } catch (e) {

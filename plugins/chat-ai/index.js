@@ -135,12 +135,26 @@ function init(ctx) {
     let targetUser = '';
 
     for (const cmd of commands) {
-      const rx = new RegExp(cmd.trigger, 'i');
-      const m = text.match(rx);
-      if (m) {
-        matched = cmd;
-        targetUser = m[1] || '';
-        break;
+      try {
+        const rx = new RegExp(cmd.trigger, 'i');
+        const m = text.match(rx);
+        if (m) {
+          matched = cmd;
+          if (m[1]) {
+            targetUser = m[1].trim();
+          } else {
+            // Extract everything after the matched trigger phrase
+            const idx = text.toLowerCase().indexOf(cmd.trigger.toLowerCase());
+            if (idx !== -1) {
+              targetUser = text.substring(idx + cmd.trigger.length).trim();
+            } else {
+              targetUser = '';
+            }
+          }
+          break;
+        }
+      } catch (e) {
+        console.warn('Invalid regex trigger:', cmd.trigger, e.message);
       }
     }
 
