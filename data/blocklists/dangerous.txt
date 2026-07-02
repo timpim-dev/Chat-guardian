@@ -12,3 +12,5 @@ i\s+will\s+kill\s+you
 bomb\s+your\s+house
 dox\s+you
 shoot\s+up
+kill\s+urself
+\bkys\b
