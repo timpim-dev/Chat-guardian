@@ -180,12 +180,15 @@ function init(ctx) {
       // Fallback: Use AI to interpret command
       addThoughtLog('No static regex matched. Asking AI to interpret command...');
       try {
-        const systemPrompt = `Analyze the user input. Determine if they want to execute an action. 
+        const systemPrompt = `Analyze the user input. Determine if they want to execute a command. 
 Available actions:
 - "ban": Ban a user
 - "shoutout": Give a shoutout to a user
-- "say": Say a message in chat
-- "imagine": Imagine a message content and say it in chat
+- "say": Say/send a message directly to chat
+- "imagine": Imagine a creative message and say it in chat
+
+IMPORTANT: If the user input is a general question (e.g. math queries like "how much is 3*4", trivia, facts), a greeting, general chat, or has no explicit request to execute a command or post to chat, you MUST reply with:
+{"action": "none", "target": ""}
 
 Reply ONLY with a JSON object in this format:
 {"action": "ban" or "shoutout" or "say" or "imagine" or "none", "target": "username" or "message text" or "imagined message instruction" or ""}
