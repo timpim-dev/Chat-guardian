@@ -62,9 +62,9 @@ async function callOpenRouter(prompt, systemPrompt) {
   try {
     return await makeRequest(model);
   } catch (e) {
-    if (e.isRateLimit && model !== 'liquid/lfm-2.5-1.2b-instruct:free') {
-      addThoughtLog(`[Chat AI] Model "${model}" rate-limited or unavailable. Retrying with fallback model (liquid/lfm-2.5-1.2b-instruct:free)...`);
-      return await makeRequest('liquid/lfm-2.5-1.2b-instruct:free');
+    if (e.isRateLimit && model !== 'google/gemma-4-26b-a4b-it:free') {
+      addThoughtLog(`[Chat AI] Model "${model}" rate-limited or unavailable. Retrying with fallback model (google/gemma-4-26b-a4b-it:free)...`);
+      return await makeRequest('google/gemma-4-26b-a4b-it:free');
     }
     throw new Error(e.message || e);
   }
