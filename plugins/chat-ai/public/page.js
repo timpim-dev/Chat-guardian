@@ -356,12 +356,28 @@ window.ChatAiPage = {
     };
 
     rec.onresult = async (event) => {
-      const result = event.results[event.results.length - 1][0].transcript.trim().toLowerCase();
-      console.log('Heard speech:', result);
-      
+      const rawResult = event.results[event.results.length - 1][0].transcript.trim();
+      console.log('Heard speech:', rawResult);
+
+      const result = rawResult.toLowerCase();
       const wake = this.settings.wake_word.toLowerCase();
-      if (result.includes(wake)) {
-        const cmdText = result.split(wake).pop().trim();
+      
+      // Smart check: allow matching even with punctuation (e.g. "hey, guardian")
+      const cleanResult = result.replace(/[\s,.:;!?]+/g, ' ');
+      const cleanWake = wake.replace(/[\s,.:;!?]+/g, ' ');
+
+      if (cleanResult.includes(cleanWake)) {
+        let cmdText = '';
+        const idx = cleanResult.indexOf(cleanWake);
+        if (idx !== -1) {
+          cmdText = cleanResult.substring(idx + cleanWake.length).trim();
+        } else {
+          cmdText = result.split(wake).pop().trim();
+        }
+
+        // Clean leading/trailing punctuation from the command text (e.g. leading commas, dots)
+        cmdText = cmdText.replace(/^[\s,.:;!?]+/, '').trim();
+
         if (cmdText) {
           Toast.show('Wake word detected. Parsing command: ' + cmdText, 'info');
           // Send to server to parse

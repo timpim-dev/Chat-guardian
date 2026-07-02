@@ -125,7 +125,8 @@ function init(ctx) {
     const { message } = req.body;
     addThoughtLog(`Streamer: "${message}"`);
     try {
-      const systemPrompt = "You are Chat AI, an advanced moderation and streaming companion. You can assist the streamer. Be helpful, concise, and professional. Do not use emojis.";
+      const channel = process.env.BROADCASTER_CHANNEL || 'streamer';
+      const systemPrompt = `You are Chat AI, an advanced moderation and streaming companion for the streamer named "${channel}". You MUST preserve the exact spelling of "${channel}" (do not autocorrect it to Thrion or Therian, it contains the number 3). Be helpful, concise, and professional. Do not use emojis.`;
       const reply = await callOpenRouter(message, systemPrompt);
       addThoughtLog(`Chat AI Reply: "${reply}"`);
       res.json({ reply });
@@ -263,8 +264,8 @@ Do not include any other text.`;
         const client = context.twitchIrc.getClient();
         if (client) {
           addThoughtLog(`Imagining message content for instruction: "${target}"`);
-          const imaginePrompt = `The streamer's name is "${channel}". Imagine a short, creative, and engaging message to send to Twitch chat based on this instruction: "${target}". Respond with ONLY the imagined message text. Do not write any quotes, emojis, or conversational filler. Keep it under 200 characters.`;
-          const systemPrompt = `You are a creative streaming companion writing a chat message on behalf of the streamer named "${channel}". Be concise, engaging, and professional.`;
+          const imaginePrompt = `The streamer's name is "${channel}". You MUST use this exact spelling "${channel}" (preserve the underscore and the number 3, do not autocorrect it to Thrion/Therian). Imagine a short, creative, and engaging message to send to Twitch chat based on this instruction: "${target}". Respond with ONLY the imagined message text. Do not write any quotes, emojis, or conversational filler. Keep it under 200 characters.`;
+          const systemPrompt = `You are a creative streaming companion writing a chat message on behalf of the streamer named "${channel}". You must preserve the spelling of "${channel}" exactly (with the number 3 and underscore, do not change it). Be concise, engaging, and professional.`;
           const imaginedMessage = await callOpenRouter(imaginePrompt, systemPrompt);
           
           client.say(channel, imaginedMessage).catch(() => {});
