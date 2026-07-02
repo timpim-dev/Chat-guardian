@@ -11,7 +11,7 @@
     {"type": "username", "pattern": "viewer_?king", "label": "Viewer king bot"},
     {"type": "username", "pattern": "growth_?service", "label": "Growth service bot"},
     {"type": "username", "pattern": "boostviews?", "label": "Boost views bot"},
-    {"type": "message", "pattern": "buy (viewers?|followers?|subs?) at", "label": "Buy viewers ad"},
+    {"type": "message", "pattern": "Streamboo ( .com)", "label": "Streamboo Bot"
     {"type": "message", "pattern": "cheap (viewers?|followers?|subs?)", "label": "Cheap viewers ad"},
     {"type": "message", "pattern": "get (viewers?|followers?) (fast|now|today|instantly)", "label": "Get viewers fast ad"},
     {"type": "message", "pattern": "grow your (channel|stream) (fast|now|today)", "label": "Grow channel ad"},
