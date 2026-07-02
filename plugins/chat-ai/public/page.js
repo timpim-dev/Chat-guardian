@@ -7,6 +7,79 @@ window.ChatAiPage = {
   pendingCommand: null,
 
   renderChat(container) {
+    // Inject custom voice orb CSS if not already present
+    let styleTag = document.getElementById('chatai-voice-orb-styles');
+    if (!styleTag) {
+      styleTag = document.createElement('style');
+      styleTag.id = 'chatai-voice-orb-styles';
+      styleTag.innerHTML = `
+        .voice-orb-container {
+          position: relative;
+          width: 100px;
+          height: 100px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          margin: 30px auto;
+        }
+        .voice-orb {
+          width: 50px;
+          height: 50px;
+          border-radius: 50%;
+          background: var(--accent-safe-text, #8a2be2);
+          box-shadow: 0 0 25px var(--accent-safe-text, #8a2be2);
+          z-index: 2;
+          animation: orb-pulse-size 2s infinite ease-in-out;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        .voice-orb-pulse {
+          position: absolute;
+          width: 50px;
+          height: 50px;
+          border-radius: 50%;
+          border: 2px solid var(--accent-safe-text, #8a2be2);
+          opacity: 0;
+          animation: orb-ripple 2s infinite ease-out;
+          z-index: 1;
+        }
+        .voice-orb-pulse.delay-1 {
+          animation-delay: 0.6s;
+        }
+        .voice-orb-pulse.delay-2 {
+          animation-delay: 1.2s;
+        }
+        @keyframes orb-pulse-size {
+          0%, 100% { transform: scale(1); filter: brightness(1); }
+          50% { transform: scale(1.15); filter: brightness(1.3); }
+        }
+        @keyframes orb-ripple {
+          0% {
+            transform: scale(1);
+            opacity: 0.8;
+          }
+          100% {
+            transform: scale(2.8);
+            opacity: 0;
+          }
+        }
+        #chatai-chat-card {
+          transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+        #chatai-chat-card.listening-active {
+          border-color: var(--accent-safe-text, #8a2be2) !important;
+          box-shadow: 0 0 15px var(--accent-safe-text, #8a2be2);
+          animation: card-border-pulse 2s infinite ease-in-out;
+        }
+        @keyframes card-border-pulse {
+          0%, 100% { box-shadow: 0 0 5px rgba(138, 43, 226, 0.2); }
+          50% { box-shadow: 0 0 20px var(--accent-safe-text, #8a2be2); }
+        }
+      `;
+      document.head.appendChild(styleTag);
+    }
+
     container.innerHTML = `
       <div class="header-row">
         <h1 class="page-title">Chat AI Assistant</h1>
@@ -17,7 +90,7 @@ window.ChatAiPage = {
 
       <div style="display:flex;gap:20px;height:calc(100vh - 180px)">
         <!-- Chat Area -->
-        <div class="card" style="flex:2;display:flex;flex-direction:column;justify-content:space-between">
+        <div id="chatai-chat-card" class="card" style="flex:2;display:flex;flex-direction:column;justify-content:space-between">
           <div id="chatai-chat-messages" style="flex:1;overflow-y:auto;padding:10px;display:flex;flex-direction:column;gap:10px">
             <div class="text-muted" style="text-align:center;margin-top:20px">Send a message or enable voice mode to start.</div>
           </div>
@@ -30,7 +103,7 @@ window.ChatAiPage = {
         <!-- Dynamic Action Overlay / Status -->
         <div class="card" style="flex:1;display:flex;flex-direction:column;gap:15px">
           <h3>AI Voice Command Status</h3>
-          <div id="audio-status-box" class="text-muted" style="font-size:12px;background:rgba(255,255,255,0.02);padding:10px;border-radius:4px">
+          <div id="audio-status-box" class="text-muted" style="font-size:12px;background:rgba(255,255,255,0.02);padding:10px;border-radius:4px;text-align:center">
             Audio mode is currently disabled. Enable Audio Mode to use voice commands.
           </div>
           <div id="voice-confirmation-box" style="display:none;background:rgba(255,193,7,0.05);padding:12px;border:1px solid #ffc107;border-radius:4px">
@@ -62,6 +135,15 @@ window.ChatAiPage = {
           <div class="setting-row">
             <span class="setting-label">Voice Wake Word</span>
             <span class="setting-value"><input type="text" id="chatai-wakeword-input" value="${this.settings.wake_word}"></span>
+          </div>
+          <div class="setting-row">
+            <span class="setting-label">Turbo Mode (No Confirmation)</span>
+            <span class="setting-value">
+              <label class="toggle">
+                <input type="checkbox" id="chatai-turbomode-input" ${this.settings.turbo_mode ? 'checked' : ''}>
+                <span class="toggle-slider"></span>
+              </label>
+            </span>
           </div>
           <div>
             <h3>Voice / Text Command Triggers</h3>
@@ -96,6 +178,7 @@ window.ChatAiPage = {
   async saveSettings() {
     const cooldown = parseInt(document.getElementById('chatai-cooldown-input').value) || 500;
     const wake_word = document.getElementById('chatai-wakeword-input').value.trim() || 'guardian';
+    const turbo_mode = document.getElementById('chatai-turbomode-input').checked;
 
     const commands = [];
     const rows = document.querySelectorAll('.command-item-row');
@@ -106,13 +189,14 @@ window.ChatAiPage = {
         let label = 'Say in Chat';
         if (action === 'ban') label = 'Ban [user]';
         else if (action === 'shoutout') label = 'Shoutout [user]';
+        else if (action === 'imagine') label = 'Imagine & Say';
         commands.push({ trigger, action, label });
       }
     });
 
     try {
-      await App.api('PUT', '/api/plugins/chat-ai/settings', { cooldown, wake_word, commands });
-      this.settings = { cooldown, wake_word, commands };
+      await App.api('PUT', '/api/plugins/chat-ai/settings', { cooldown, wake_word, turbo_mode, commands });
+      this.settings = { cooldown, wake_word, turbo_mode, commands };
       Toast.show('Chat AI settings saved', 'success');
     } catch (e) {
       Toast.show('Failed to save settings: ' + e.message, 'error');
@@ -139,6 +223,7 @@ window.ChatAiPage = {
         <option value="shoutout" ${cmd.action === 'shoutout' ? 'selected' : ''}>Shoutout</option>
         <option value="ban" ${cmd.action === 'ban' ? 'selected' : ''}>Ban</option>
         <option value="say" ${cmd.action === 'say' ? 'selected' : ''}>Say in Chat</option>
+        <option value="imagine" ${cmd.action === 'imagine' ? 'selected' : ''}>Imagine & Say</option>
       </select>
       <button onclick="this.parentElement.remove()" class="btn-secondary" style="padding:4px 8px;background:var(--accent-error-text);color:#fff">Delete</button>
     `;
@@ -195,11 +280,22 @@ window.ChatAiPage = {
       // First, check if the text matches a command trigger (regex or AI command)
       const cmdRes = await App.api('POST', '/api/plugins/chat-ai/command', { text: msg });
       if (cmdRes.matched) {
-        this.pendingCommand = { action: cmdRes.action, target: cmdRes.target };
-        const confirmBox = document.getElementById('voice-confirmation-box');
-        if (confirmBox) {
-          document.getElementById('voice-confirmation-msg').textContent = cmdRes.message;
-          confirmBox.style.display = 'block';
+        const cmdPayload = { action: cmdRes.action, target: cmdRes.target };
+        if (this.settings.turbo_mode) {
+          Toast.show('Turbo execution: sending message...', 'info');
+          try {
+            const execRes = await App.api('POST', '/api/plugins/chat-ai/execute-command', cmdPayload);
+            Toast.show(execRes.message, 'success');
+          } catch (err) {
+            Toast.show('Turbo execution failed: ' + err.message, 'error');
+          }
+        } else {
+          this.pendingCommand = cmdPayload;
+          const confirmBox = document.getElementById('voice-confirmation-box');
+          if (confirmBox) {
+            document.getElementById('voice-confirmation-msg').textContent = cmdRes.message;
+            confirmBox.style.display = 'block';
+          }
         }
         return;
       }
@@ -236,7 +332,21 @@ window.ChatAiPage = {
       this.isListening = true;
       document.getElementById('btn-audio-toggle').textContent = 'Audio Mode: On';
       document.getElementById('btn-audio-toggle').style.background = 'var(--accent-error-text)';
-      document.getElementById('audio-status-box').innerHTML = `Listening for wake word: <strong>"${this.settings.wake_word}"</strong>...`;
+      const card = document.getElementById('chatai-chat-card');
+      if (card) card.classList.add('listening-active');
+      document.getElementById('audio-status-box').innerHTML = `
+        <div style="margin-bottom:10px;text-align:center">Listening for wake word: <strong>"${this.settings.wake_word}"</strong>...</div>
+        <div class="voice-orb-container">
+          <div class="voice-orb-pulse"></div>
+          <div class="voice-orb-pulse delay-1"></div>
+          <div class="voice-orb-pulse delay-2"></div>
+          <div class="voice-orb">
+            <svg viewBox="0 0 24 24" width="26" height="26" fill="var(--bg, #0a0a0a)">
+              <path d="M11.571 4.714h1.715v5.143H11.57zm4.715 0H18v5.143h-1.714zM6 0L1.714 4.286v15.428h5.143V24l4.286-4.286h3.428L22.286 12V0zm14.571 11.143l-3.428 3.428h-3.429l-3 3v-3H6.857V1.714h13.714Z"/>
+            </svg>
+          </div>
+        </div>
+      `;
     };
 
     rec.onerror = (e) => {
@@ -258,9 +368,20 @@ window.ChatAiPage = {
           try {
             const res = await App.api('POST', '/api/plugins/chat-ai/command', { text: cmdText });
             if (res.matched) {
-              this.pendingCommand = { action: res.action, target: res.target };
-              document.getElementById('voice-confirmation-msg').textContent = res.message;
-              document.getElementById('voice-confirmation-box').style.display = 'block';
+              const cmdPayload = { action: res.action, target: res.target };
+              if (ChatAiPage.settings.turbo_mode) {
+                Toast.show('Turbo execution: sending message...', 'info');
+                try {
+                  const execRes = await App.api('POST', '/api/plugins/chat-ai/execute-command', cmdPayload);
+                  Toast.show(execRes.message, 'success');
+                } catch (err) {
+                  Toast.show('Turbo execution failed: ' + err.message, 'error');
+                }
+              } else {
+                this.pendingCommand = cmdPayload;
+                document.getElementById('voice-confirmation-msg').textContent = res.message;
+                document.getElementById('voice-confirmation-box').style.display = 'block';
+              }
             } else {
               Toast.show('Voice command not recognized: ' + cmdText, 'warning');
             }
@@ -278,6 +399,8 @@ window.ChatAiPage = {
       } else {
         document.getElementById('btn-audio-toggle').textContent = 'Audio Mode: Off';
         document.getElementById('btn-audio-toggle').style.background = '';
+        const card = document.getElementById('chatai-chat-card');
+        if (card) card.classList.remove('listening-active');
         document.getElementById('audio-status-box').textContent = 'Audio mode is currently disabled. Enable Audio Mode to use voice commands.';
       }
     };
@@ -288,6 +411,8 @@ window.ChatAiPage = {
 
   stopSpeechRecognition() {
     this.isListening = false;
+    const card = document.getElementById('chatai-chat-card');
+    if (card) card.classList.remove('listening-active');
     if (this.speechRecognizer) {
       this.speechRecognizer.stop();
     }

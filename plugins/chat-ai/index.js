@@ -81,10 +81,15 @@ function init(ctx) {
   if (!context.db.getSetting('chatai_wake_word')) {
     context.db.setSetting('chatai_wake_word', 'guardian');
   }
+  if (!context.db.getSetting('chatai_turbo_mode')) {
+    context.db.setSetting('chatai_turbo_mode', 'false');
+  }
   if (!context.db.getSetting('chatai_commands')) {
     const defaultCommands = [
       { trigger: 'ban ([a-zA-Z0-9_]+)', action: 'ban', label: 'Ban [user]' },
-      { trigger: 'shoutout ([a-zA-Z0-9_]+)', action: 'shoutout', label: 'Shoutout [user]' }
+      { trigger: 'shoutout ([a-zA-Z0-9_]+)', action: 'shoutout', label: 'Shoutout [user]' },
+      { trigger: 'tell chat', action: 'say', label: 'Say in Chat' },
+      { trigger: 'tell message', action: 'imagine', label: 'Imagine & Say' }
     ];
     context.db.setSetting('chatai_commands', JSON.stringify(defaultCommands));
   }
@@ -96,14 +101,18 @@ function init(ctx) {
     res.json({
       cooldown: context.db.getSetting('chatai_cooldown') || '500',
       wake_word: context.db.getSetting('chatai_wake_word') || 'guardian',
+      turbo_mode: context.db.getSetting('chatai_turbo_mode') === 'true',
       commands: JSON.parse(context.db.getSetting('chatai_commands') || '[]')
     });
   });
 
   router.put('/settings', (req, res) => {
-    const { cooldown, wake_word, commands } = req.body;
+    const { cooldown, wake_word, turbo_mode, commands } = req.body;
     context.db.setSetting('chatai_cooldown', cooldown.toString());
     context.db.setSetting('chatai_wake_word', wake_word);
+    if (turbo_mode !== undefined) {
+      context.db.setSetting('chatai_turbo_mode', turbo_mode ? 'true' : 'false');
+    }
     context.db.setSetting('chatai_commands', JSON.stringify(commands));
     res.json({ success: true });
   });
@@ -175,9 +184,10 @@ Available actions:
 - "ban": Ban a user
 - "shoutout": Give a shoutout to a user
 - "say": Say a message in chat
+- "imagine": Imagine a message content and say it in chat
 
 Reply ONLY with a JSON object in this format:
-{"action": "ban" or "shoutout" or "say" or "none", "target": "username" or "message text" or ""}
+{"action": "ban" or "shoutout" or "say" or "imagine" or "none", "target": "username" or "message text" or "imagined message instruction" or ""}
 Do not include any other text.`;
 
         const aiResponse = await callOpenRouter(text, systemPrompt);
@@ -249,6 +259,20 @@ Do not include any other text.`;
           addThoughtLog(`Sent message to chat: "${target}"`);
         }
         res.json({ success: true, message: `Sent message: "${target}" to chat.` });
+      } else if (action === 'imagine') {
+        const client = context.twitchIrc.getClient();
+        if (client) {
+          addThoughtLog(`Imagining message content for instruction: "${target}"`);
+          const imaginePrompt = `The streamer's name is "${channel}". Imagine a short, creative, and engaging message to send to Twitch chat based on this instruction: "${target}". Respond with ONLY the imagined message text. Do not write any quotes, emojis, or conversational filler. Keep it under 200 characters.`;
+          const systemPrompt = `You are a creative streaming companion writing a chat message on behalf of the streamer named "${channel}". Be concise, engaging, and professional.`;
+          const imaginedMessage = await callOpenRouter(imaginePrompt, systemPrompt);
+          
+          client.say(channel, imaginedMessage).catch(() => {});
+          addThoughtLog(`Successfully imagined and sent message: "${imaginedMessage}"`);
+          res.json({ success: true, message: `Imagined and sent: "${imaginedMessage}"` });
+        } else {
+          throw new Error('IRC client not connected.');
+        }
       } else {
         res.status(400).json({ error: 'Unsupported action.' });
       }
